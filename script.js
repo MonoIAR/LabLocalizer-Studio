@@ -52,7 +52,6 @@ const state = {
 
 const els = {
   pageTitle: document.getElementById("pageTitle"),
-  pageCrumb: document.getElementById("pageCrumb"),
   stats: document.getElementById("stats"),
   themeToggle: document.getElementById("themeToggle"),
   entriesPage: document.getElementById("entriesPage"),
@@ -135,7 +134,11 @@ const els = {
   testGithubButton: document.getElementById("testGithubButton"),
   saveSettingsButton: document.getElementById("saveSettingsButton"),
   loadFromGithubButton: document.getElementById("loadFromGithubButton"),
-  pushToGithubButton: document.getElementById("pushToGithubButton")
+  pushToGithubButton: document.getElementById("pushToGithubButton"),
+  importGlossaryButton: document.getElementById("importGlossaryButton"),
+  exportGlossaryButton: document.getElementById("exportGlossaryButton"),
+  glossaryFileInput: document.getElementById("glossaryFileInput"),
+  pushGlossaryToGithubButton: document.getElementById("pushGlossaryToGithubButton")
 };
 
 els.navButtons.forEach(button => {
@@ -145,6 +148,9 @@ els.themeToggle.addEventListener("click", toggleTheme);
 els.openButton.addEventListener("click", () => els.fileInput.click());
 els.fileInput.addEventListener("change", handleFilePick);
 els.exportButton.addEventListener("click", exportTxt);
+els.importGlossaryButton.addEventListener("click", () => els.glossaryFileInput.click());
+els.glossaryFileInput.addEventListener("change", handleGlossaryFilePick);
+els.exportGlossaryButton.addEventListener("click", exportGlossary);
 els.bulkButton.addEventListener("click", event => {
   event.stopPropagation();
   els.bulkMenu.hidden = !els.bulkMenu.hidden;
@@ -246,6 +252,7 @@ els.saveSettingsButton.addEventListener("click", saveSettings);
 els.testGithubButton.addEventListener("click", testGithubConnection);
 els.loadFromGithubButton.addEventListener("click", loadFromGithub);
 els.pushToGithubButton.addEventListener("click", pushToGithub);
+els.pushGlossaryToGithubButton.addEventListener("click", pushGlossaryToGithub);
 
 function switchPage(page) {
   state.page = page;
@@ -256,12 +263,11 @@ function switchPage(page) {
   els.stats.hidden = page !== "entries";
 
   const titles = {
-    entries: ["词条管理", "LabLocalizer / 本地化 txt / 词条管理"],
-    terms: ["术语管理", "LabLocalizer / 术语库 / 术语管理"],
-    announcements: ["公告", "LabLocalizer / 公告"]
+    entries: "词条管理",
+    terms: "术语管理",
+    announcements: "公告"
   };
-  els.pageTitle.textContent = titles[page][0];
-  els.pageCrumb.textContent = titles[page][1];
+  els.pageTitle.textContent = titles[page];
 }
 
 function applyTheme(dark) {
@@ -305,6 +311,8 @@ function updateGithubActionButtons() {
   const canUseGithub = settings.githubToken && settings.githubOwner && settings.githubRepo && settings.githubPath;
   els.loadFromGithubButton.disabled = !canUseGithub;
   els.pushToGithubButton.disabled = !canUseGithub || state.entries.length === 0;
+  const canPushGlossary = settings.githubToken && settings.githubOwner && settings.githubRepo;
+  els.pushGlossaryToGithubButton.disabled = !canPushGlossary || state.terms.length === 0;
 }
 
 function githubHeaders() {
@@ -317,7 +325,7 @@ function githubHeaders() {
 
 async function testGithubConnection() {
   if (!settings.githubToken) {
-    showToast("请先填写 GitHub Token。");
+    showToast("请先填写 PAT。");
     return;
   }
   try {
@@ -350,6 +358,37 @@ async function loadFromGithub() {
     showToast("已从 GitHub 加载文件。");
   } catch (err) {
     showToast(`读取失败：${err.message}`);
+  }
+
+  const glossaryPath = "glossary.json";
+  const glossaryUrl = `https://api.github.com/repos/${encodeURIComponent(settings.githubOwner)}/${encodeURIComponent(settings.githubRepo)}/contents/${encodeURIComponent(glossaryPath)}?ref=${encodeURIComponent(branch)}`;
+  try {
+    const res = await fetch(glossaryUrl, { headers: githubHeaders() });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.content) return;
+    const bytes = Uint8Array.from(atob(data.content.replace(/\n/g, "")), c => c.charCodeAt(0));
+    const text = new TextDecoder().decode(bytes);
+    const parsed = JSON.parse(text);
+    const terms = Array.isArray(parsed) ? parsed : Array.isArray(parsed.terms) ? parsed.terms : null;
+    if (!terms) return;
+    const now = Date.now();
+    state.terms = terms.map((item, index) => ({
+      id: `term_${now}_${index}`,
+      type: item.type || "名词",
+      source: String(item.source || "").trim(),
+      translation: String(item.translation || "").trim(),
+      description: String(item.description || "").trim(),
+      caseSensitive: Boolean(item.caseSensitive),
+      createdAt: now,
+      updatedAt: now
+    })).filter(term => term.source.length > 0);
+    state.selectedTermIds.clear();
+    state.githubGlossarySha = data.sha;
+    renderTerms();
+    showToast(`已从 GitHub 加载 ${state.terms.length} 条术语。`);
+  } catch {
+    // glossary.json may not exist yet, that's fine
   }
 }
 
@@ -429,6 +468,87 @@ async function pushToGithub() {
     window.open(prData.html_url, "_blank");
   } catch (err) {
     showToast(`提交失败：${err.message}`);
+  }
+}
+
+async function pushGlossaryToGithub() {
+  if (!settings.githubToken || !settings.githubOwner || !settings.githubRepo) {
+    showToast("请先在设置中填写完整的 GitHub 信息。");
+    return;
+  }
+  if (!state.terms.length) {
+    showToast("当前没有可提交的术语。");
+    return;
+  }
+
+  const glossaryPath = "glossary.json";
+  const payload = state.terms.map(term => ({
+    type: term.type,
+    source: term.source,
+    translation: term.translation,
+    description: term.description,
+    caseSensitive: term.caseSensitive
+  }));
+  const contentBytes = new TextEncoder().encode(JSON.stringify(payload, null, 2));
+  const content = btoa(Array.from(contentBytes, b => String.fromCharCode(b)).join(""));
+  const branch = settings.githubBranch || "main";
+
+  let sha = state.githubGlossarySha || "";
+  if (!sha) {
+    try {
+      const getUrl = `https://api.github.com/repos/${encodeURIComponent(settings.githubOwner)}/${encodeURIComponent(settings.githubRepo)}/contents/${encodeURIComponent(glossaryPath)}?ref=${encodeURIComponent(branch)}`;
+      const getRes = await fetch(getUrl, { headers: githubHeaders() });
+      if (getRes.ok) {
+        const data = await getRes.json();
+        sha = data.sha || "";
+      }
+    } catch {}
+  }
+
+  const prBranch = `lablocalizer-glossary-${Date.now()}`;
+  const message = `更新术语表 (${new Date().toLocaleString("zh-CN")})`;
+
+  try {
+    const repoUrl = `https://api.github.com/repos/${encodeURIComponent(settings.githubOwner)}/${encodeURIComponent(settings.githubRepo)}`;
+
+    const baseRefRes = await fetch(`${repoUrl}/git/ref/heads/${encodeURIComponent(branch)}`, { headers: githubHeaders() });
+    if (!baseRefRes.ok) throw new Error(`获取基础分支失败：HTTP ${baseRefRes.status}`);
+    const baseRefData = await baseRefRes.json();
+    const baseSha = baseRefData.object.sha;
+
+    const createRefRes = await fetch(`${repoUrl}/git/refs`, {
+      method: "POST",
+      headers: githubHeaders(),
+      body: JSON.stringify({ ref: `refs/heads/${prBranch}`, sha: baseSha })
+    });
+    if (!createRefRes.ok) throw new Error(`创建分支失败：HTTP ${createRefRes.status}`);
+
+    const putUrl = `${repoUrl}/contents/${encodeURIComponent(glossaryPath)}`;
+    const putBody = { message, content, branch: prBranch };
+    if (sha) putBody.sha = sha;
+    const putRes = await fetch(putUrl, {
+      method: "PUT",
+      headers: githubHeaders(),
+      body: JSON.stringify(putBody)
+    });
+    if (!putRes.ok) throw new Error(`提交术语表失败：HTTP ${putRes.status}`);
+
+    const prRes = await fetch(`${repoUrl}/pulls`, {
+      method: "POST",
+      headers: githubHeaders(),
+      body: JSON.stringify({
+        title: message,
+        head: prBranch,
+        base: branch,
+        body: "由 LabLocalizer Studio 自动创建的术语表更新 PR。"
+      })
+    });
+    if (!prRes.ok) throw new Error(`创建 Pull Request 失败：HTTP ${prRes.status}`);
+    const prData = await prRes.json();
+    showToast(`术语表 PR 已创建：#${prData.number}`);
+    window.open(prData.html_url, "_blank");
+  } catch (err) {
+    showToast(`术语表提交失败：${err.message}`);
   }
 }
 
@@ -1166,6 +1286,29 @@ function filteredTerms() {
   return terms;
 }
 
+function handleGlossaryFilePick(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  GLOSSARY_IO.importGlossary(file)
+    .then(imported => {
+      state.terms = imported;
+      state.selectedTermIds.clear();
+      renderTerms();
+      showToast(`已导入 ${imported.length} 条术语。`);
+    })
+    .catch(err => showToast(`导入失败：${err.message}`));
+  els.glossaryFileInput.value = "";
+}
+
+function exportGlossary() {
+  if (!state.terms.length) {
+    showToast("当前没有可导出的术语。");
+    return;
+  }
+  GLOSSARY_IO.exportGlossary(state.terms);
+  showToast("术语表已导出为 glossary.json。");
+}
+
 let toastTimer = 0;
 function showToast(message) {
   els.toast.textContent = message;
@@ -1173,6 +1316,19 @@ function showToast(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => els.toast.classList.remove("show"), 2400);
 }
+
+function updateExportGlossaryButton() {
+  if (els.exportGlossaryButton) {
+    els.exportGlossaryButton.disabled = state.terms.length === 0;
+  }
+}
+
+const originalRenderTerms = renderTerms;
+renderTerms = function() {
+  originalRenderTerms();
+  updateExportGlossaryButton();
+  updateGithubActionButtons();
+};
 
 populateSettings();
 renderEntries();

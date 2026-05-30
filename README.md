@@ -1,7 +1,9 @@
 # LabLocalizer Studio
-一个用于LabLocalizer使用的翻译辅助工具。
+一个用于LabLocalizer使用的人工翻译辅助工具，可以提高工作效率。
 
 ---
+本项目使用AI进行辅助开发。但项目整体由人工设计，且代码经过人工筛查和修改。
+使用的AI工具包括：OpenAI Codex、Trae IDE，模型为：GPT-5.5、Kimi-K2.6。
 
 Copyright (c) 2026 MIAR & CAitVR, ChakerAt, Finn5470. All rights reserved.
 

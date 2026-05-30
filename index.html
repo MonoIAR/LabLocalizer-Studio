@@ -66,7 +66,6 @@
       <header class="topbar">
         <div>
           <h1 id="pageTitle">词条管理</h1>
-          <div class="crumb" id="pageCrumb">LabLocalizer / 本地化 txt / 词条管理</div>
         </div>
         <section class="stats" id="stats">
           <div class="stat"><strong id="totalCount">0</strong><span>总条目</span></div>
@@ -206,7 +205,11 @@
 
       <section class="page term-page" id="termsPage" hidden>
         <div class="term-toolbar">
-          <button class="btn primary" id="createTermButton" type="button">⊕ 创建术语</button>
+          <button class="btn primary" id="createTermButton" type="button">创建术语</button>
+          <button class="btn secondary" id="importGlossaryButton" type="button"><i class="fa-solid fa-file-import"></i> 导入 JSON</button>
+          <button class="btn secondary" id="exportGlossaryButton" type="button" disabled><i class="fa-solid fa-file-export"></i> 导出 JSON</button>
+          <button class="btn secondary" id="pushGlossaryToGithubButton" type="button" disabled><i class="fa-solid fa-code-pull-request"></i> 保存并创建PR</button>
+          <input class="file-input" id="glossaryFileInput" type="file" accept=".json,application/json" hidden />
           <div class="bulk-wrap" id="termBulkWrap" hidden>
             <button class="btn success" id="termBulkButton" type="button">已选 0 项 ▾</button>
             <div class="bulk-menu" id="termBulkMenu" hidden>
@@ -249,8 +252,7 @@
       <section class="page announcement-page" id="announcementsPage" hidden>
         <div class="notice">
           <h2>公告</h2>
-          <p>这里可以放项目翻译规范、当前版本说明、协作提醒和发布前检查项。</p>
-          <p>当前 Web UI 的词条状态和审核状态只保存在页面内存里；导出的 txt 仍保持 LabLocalizer 的“原文 =&gt; 译文”格式。</p>
+          <p>占位符</p>
         </div>
       </section>
     </main>
@@ -304,6 +306,8 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="glossary-io.js"></script>
   <script src="script.js"></script>
+  <script src="announcements.js"></script>
 </body>
 </html>
