@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LabLocalizer Studio</title>
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo"><i class="fa-solid fa-language"></i></div>
+        <div>
+          <div class="brand-title">LabLocalizer Studio</div>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="主导航">
+        <button class="nav-button active" type="button" data-page="entries">
+          <span class="nav-icon fa-solid fa-list"></span>词条管理
+        </button>
+        <button class="nav-button" type="button" data-page="terms">
+          <span class="nav-icon fa-solid fa-book-atlas"></span>术语管理
+        </button>
+        <button class="nav-button" type="button" data-page="announcements">
+          <span class="nav-icon fa-solid fa-bell"></span>公告
+        </button>
+      </nav>
+
+      <div class="settings-section">
+        <button class="settings-toggle" id="settingsToggle" type="button" aria-expanded="false" aria-controls="settingsPanel">
+          <span class="nav-icon fa-solid fa-ellipsis"></span>更多
+        </button>
+        <div class="settings-panel" id="settingsPanel" hidden>
+          <div class="settings-group">
+            <label class="settings-label">外观</label>
+            <button class="btn secondary settings-theme-btn" id="settingsThemeToggle" type="button">
+              <span class="theme-icon" aria-hidden="true"></span> 切换主题
+            </button>
+          </div>
+          <div class="settings-group">
+            <label class="settings-label">GitHub</label>
+            <input class="input settings-input" id="githubToken" type="password" placeholder="Personal Access Token" autocomplete="off" />
+            <input class="input settings-input" id="githubOwner" type="text" placeholder="仓库所有者 (owner)" autocomplete="off" />
+            <input class="input settings-input" id="githubRepo" type="text" placeholder="仓库名 (repo)" autocomplete="off" />
+            <input class="input settings-input" id="githubBranch" type="text" placeholder="分支 (默认 main)" autocomplete="off" />
+            <input class="input settings-input" id="githubPath" type="text" placeholder="文件路径 (如: data/loc.txt)" autocomplete="off" />
+            <input class="input settings-input" id="githubCommitMsg" type="text" placeholder="默认提交信息" autocomplete="off" />
+            <div class="settings-actions">
+              <button class="btn secondary" id="testGithubButton" type="button">测试连接</button>
+              <button class="btn primary" id="saveSettingsButton" type="button">保存设置</button>
+            </div>
+          </div>
+          <div class="settings-group">
+            <label class="settings-label">GitHub 操作</label>
+            <button class="btn secondary" id="loadFromGithubButton" type="button" disabled><i class="fa-solid fa-cloud-arrow-down"></i> 从仓库读取</button>
+            <button class="btn secondary" id="pushToGithubButton" type="button" disabled><i class="fa-solid fa-code-pull-request"></i> 创建 Pull Request</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div>
+          <h1 id="pageTitle">词条管理</h1>
+          <div class="crumb" id="pageCrumb">LabLocalizer / 本地化 txt / 词条管理</div>
+        </div>
+        <section class="stats" id="stats">
+          <div class="stat"><strong id="totalCount">0</strong><span>总条目</span></div>
+          <div class="stat"><strong id="visibleCount">0</strong><span>本页显示</span></div>
+          <div class="stat"><strong id="translatedCount">0</strong><span>已翻译</span></div>
+          <div class="stat"><strong id="reviewedCount">0</strong><span>审核通过</span></div>
+        </section>
+        <button class="btn secondary theme-toggle" id="themeToggle" type="button" title="切换暗色模式" aria-label="切换暗色模式">
+          <span class="theme-icon" aria-hidden="true"></span>
+        </button>
+      </header>
+
+      <section class="page entries-page" id="entriesPage">
+        <div class="entries-layout">
+          <section class="panel list-panel">
+            <div class="toolbar">
+              <input class="file-input" id="fileInput" type="file" accept=".txt,text/plain" />
+              <button class="btn primary" id="openButton" type="button"><i class="fa-solid fa-file-import"></i>打开 TXT</button>
+              <button class="btn secondary" id="exportButton" type="button" disabled><i class="fa-solid fa-file-export"></i>导出 TXT</button>
+              <div class="bulk-wrap" id="bulkWrap" hidden>
+                <button class="btn success" id="bulkButton" type="button">已选 0 项 ▾</button>
+                <div class="bulk-menu" id="bulkMenu" hidden>
+                  <button type="button" data-bulk-status="未翻译">标记为 <span class="badge neutral">未翻译</span></button>
+                  <button type="button" data-bulk-status="已翻译">标记为 <span class="badge done">已翻译</span></button>
+                  <button type="button" data-bulk-status="有疑问">标记为 <span class="badge question">有疑问</span></button>
+                  <button type="button" data-bulk-review="审核通过">标记为 <span class="badge done">已审核</span></button>
+                  <button type="button" data-bulk-review="未审核">标记为 <span class="badge neutral">未审核</span></button>
+                  <button type="button" data-bulk-review="审核驳回">标记为 <span class="badge rejected">已驳回</span></button>
+                  <div class="bulk-separator"></div>
+                  <button type="button" data-bulk-clear="true">取消选择</button>
+                  <button type="button" data-bulk-delete="true">删除已选词条</button>
+                </div>
+              </div>
+              <input class="input" id="searchInput" type="search" placeholder="搜索词条" autocomplete="off" />
+              <div class="filter-row">
+                <select class="select" id="translationFilter" aria-label="翻译状态筛选">
+                  <option value="all">全部翻译状态</option>
+                  <option value="translated">只看已翻译</option>
+                  <option value="untranslated">只看未翻译</option>
+                  <option value="question">只看有疑问</option>
+                </select>
+                <select class="select" id="reviewFilter" aria-label="审核状态筛选">
+                  <option value="all">全部审核状态</option>
+                  <option value="approved">只看审核通过</option>
+                  <option value="rejected">只看审核驳回</option>
+                  <option value="unreviewed">只看未审核</option>
+                </select>
+                <span class="crumb" id="fileName">尚未打开文件</span>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <div class="empty" id="emptyState">
+                <div>
+                  <strong>空工作区。</strong>
+                  <span>请点击“打开 TXT”以读取一个 LabLocalizer txt 文件</span>
+                </div>
+              </div>
+              <table id="entryTable" hidden>
+                <thead>
+                  <tr>
+                    <th class="col-check"><button class="check" id="entrySelectAll" type="button" title="全选当前页"></button></th>
+                    <th class="col-line">行</th>
+                    <th>原文</th>
+                    <th>译文</th>
+                    <th class="col-status">翻译状态</th>
+                    <th class="col-review">审核</th>
+                    <th class="col-actions">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="entryBody"></tbody>
+              </table>
+            </div>
+
+            <div class="pager" id="pager" hidden>
+              <button class="btn secondary" id="prevPageButton" type="button">上一页</button>
+              <div class="pager-info" id="pageInfo">第 1 / 1 页</div>
+              <button class="btn secondary" id="nextPageButton" type="button">下一页</button>
+            </div>
+          </section>
+
+          <div class="modal-backdrop entry-editor-backdrop" id="entryEditorBackdrop" hidden></div>
+          <aside class="panel editor-panel closed" id="entryEditor">
+            <div class="editor-head">
+              <div class="editor-heading">
+                <h2 class="editor-title" id="editorTitle">未选择词条</h2>
+                <div class="editor-meta" id="editorMeta">从左侧列表选择一行</div>
+              </div>
+              <button class="icon-button" id="closeEditorButton" type="button" title="关闭编辑栏">×</button>
+            </div>
+            <div class="editor-body">
+              <div class="field">
+                <label>原文</label>
+                <div class="readonly" id="sourcePreview"></div>
+              </div>
+              <div class="field">
+                <label for="translationEditor">译文</label>
+                <textarea class="editbox" id="translationEditor" disabled></textarea>
+              </div>
+              <div class="field">
+                <label>翻译状态</label>
+                <div class="button-grid" id="translationButtons">
+                  <button class="choice" type="button" data-status="已翻译">已翻译</button>
+                  <button class="choice" type="button" data-status="未翻译">未翻译</button>
+                  <button class="choice" type="button" data-status="有疑问">有疑问</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>审核状态</label>
+                <div class="button-grid" id="reviewButtons">
+                  <button class="choice" type="button" data-review="未审核">未审核</button>
+                  <button class="choice" type="button" data-review="审核通过">审核通过</button>
+                  <button class="choice" type="button" data-review="审核驳回">审核驳回</button>
+                </div>
+              </div>
+              <div class="term-match-box">
+                <div class="term-match-head">
+                  <span class="term-match-title">术语匹配</span>
+                  <button class="btn secondary" id="matchTermsButton" type="button" disabled>尝试匹配术语表</button>
+                </div>
+                <div class="term-match-list" id="termMatchList">
+                  <div class="term-match-empty">尚未匹配。点击按钮后会根据当前原文查找术语管理中的术语。</div>
+                </div>
+              </div>
+            </div>
+            <div class="editor-foot">
+              
+              <div class="editor-actions">
+                <button class="btn primary" id="nextEntryButton" type="button" disabled>下一个</button>
+                <button class="btn secondary" id="saveEditButton" type="button" disabled>保存</button>
+                <button class="btn secondary" id="cancelEditButton" type="button" disabled>关闭</button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="page term-page" id="termsPage" hidden>
+        <div class="term-toolbar">
+          <button class="btn primary" id="createTermButton" type="button">⊕ 创建术语</button>
+          <div class="bulk-wrap" id="termBulkWrap" hidden>
+            <button class="btn success" id="termBulkButton" type="button">已选 0 项 ▾</button>
+            <div class="bulk-menu" id="termBulkMenu" hidden>
+              <button type="button" data-term-bulk-clear="true">取消选择</button>
+              <button type="button" data-term-bulk-delete="true">删除已选术语</button>
+            </div>
+          </div>
+          <select class="select" id="termSort">
+            <option value="created">按创建顺序</option>
+            <option value="source">按原文</option>
+            <option value="type">按词性</option>
+          </select>
+          <input class="input" id="termSearch" type="search" placeholder="搜索术语" />
+        </div>
+
+        <section class="panel table-wrap term-table">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><button class="check" id="termSelectAll" type="button" title="全选术语"></button></th>
+                <th class="col-type">词性</th>
+                <th>原文</th>
+                <th>译文</th>
+                <th>说明</th>
+                <th class="col-case">大小写敏感</th>
+                <th class="col-actions">操作</th>
+              </tr>
+            </thead>
+            <tbody id="termBody"></tbody>
+          </table>
+          <div class="empty" id="termEmpty">
+            <div>
+              <strong>还没有术语</strong>
+              <span>点击“创建术语”添加名词、动词、形容词或副词。</span>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="page announcement-page" id="announcementsPage" hidden>
+        <div class="notice">
+          <h2>公告</h2>
+          <p>这里可以放项目翻译规范、当前版本说明、协作提醒和发布前检查项。</p>
+          <p>当前 Web UI 的词条状态和审核状态只保存在页面内存里；导出的 txt 仍保持 LabLocalizer 的“原文 =&gt; 译文”格式。</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="termModal" hidden>
+    <form class="modal" id="termForm">
+      <div class="modal-head">
+        <h2 class="modal-title">创建术语</h2>
+        <button class="icon-button" id="closeTermModal" type="button">×</button>
+      </div>
+      <div class="modal-body">
+        <select class="select" id="termType">
+          <option value="名词">名词</option>
+          <option value="动词">动词</option>
+          <option value="形容词">形容词</option>
+          <option value="副词">副词</option>
+        </select>
+        <input class="input" id="termSource" type="text" placeholder="术语原文，单词或短语" required />
+        <input class="input" id="termTranslation" type="text" placeholder="术语译文" required />
+        <textarea class="term-textarea" id="termDescription" placeholder="额外的说明"></textarea>
+        <label class="case-row">
+          <input id="termCaseSensitive" type="checkbox" />
+          <span>大小写敏感</span>
+        </label>
+      </div>
+      <div class="modal-foot">
+        <button class="btn secondary" id="cancelTermButton" type="button">取消</button>
+        <button class="btn primary" id="submitTermButton" type="submit">提交</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="modal-backdrop" id="deleteConfirmModal" hidden>
+    <form class="modal" id="deleteConfirmForm">
+      <div class="modal-head">
+        <h2 class="modal-title">删除已选词条</h2>
+        <button class="icon-button" id="closeDeleteConfirm" type="button">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="danger-copy" id="deleteConfirmMessage">将删除已选词条。这个操作无法在当前页面内恢复。</p>
+        <p class="danger-copy">请输入 <strong>确定删除</strong> 以继续。</p>
+        <input class="input" id="deleteConfirmInput" type="text" autocomplete="off" placeholder="确定删除" />
+      </div>
+      <div class="modal-foot">
+        <button class="btn secondary" id="cancelDeleteConfirm" type="button">取消</button>
+        <button class="btn danger" id="submitDeleteConfirm" type="submit" disabled>删除</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
