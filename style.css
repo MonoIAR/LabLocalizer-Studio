@@ -786,6 +786,22 @@ td.col-actions {
 .notice h2 { margin: 0 0 12px; font-size: 18px; }
 .notice p { margin: 8px 0; color: var(--muted); line-height: 1.65; }
 
+.readme-content h1,
+.readme-content h2,
+.readme-content h3 { margin: 16px 0 8px; color: var(--ink); }
+.readme-content h1 { font-size: 20px; }
+.readme-content h2 { font-size: 18px; }
+.readme-content h3 { font-size: 16px; }
+.readme-content ul,
+.readme-content ol { margin: 8px 0; padding-left: 24px; color: var(--muted); line-height: 1.65; }
+.readme-content li { margin: 4px 0; }
+.readme-content blockquote { margin: 8px 0; padding: 8px 12px; border-left: 3px solid var(--line); color: var(--muted); background: var(--row); }
+.readme-content code { padding: 2px 6px; border-radius: 4px; background: var(--row); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; }
+.readme-content pre { margin: 12px 0; padding: 12px; border-radius: 6px; background: var(--row); overflow-x: auto; }
+.readme-content pre code { padding: 0; background: none; }
+.readme-content a { color: var(--blue); text-decoration: none; }
+.readme-content a:hover { text-decoration: underline; }
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
