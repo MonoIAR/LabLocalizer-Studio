@@ -2,7 +2,8 @@ function githubHeaders() {
   return {
     "Accept": "application/vnd.github+json",
     "Authorization": `Bearer ${settings.githubToken}`,
-    "X-GitHub-Api-Version": "2022-11-28"
+    "X-GitHub-Api-Version": "2022-11-28",
+    "Content-Type": "application/json"
   };
 }
 
