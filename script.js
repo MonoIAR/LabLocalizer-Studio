@@ -48,7 +48,6 @@ els.translationButtons.addEventListener("click", event => {
   state.editDraft.statusTouched = true;
   updateChoiceButtons(state.editDraft);
 });
-els.matchTermsButton.addEventListener("click", matchTermsForSelectedEntry);
 els.nextEntryButton.addEventListener("click", selectNextEntry);
 els.cancelEditButton.addEventListener("click", closeEntryEditor);
 els.saveEditButton.addEventListener("click", saveEntryDraft);

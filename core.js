@@ -85,7 +85,7 @@ const els = {
   sourcePreview: document.getElementById("sourcePreview"),
   translationEditor: document.getElementById("translationEditor"),
   translationButtons: document.getElementById("translationButtons"),
-  matchTermsButton: document.getElementById("matchTermsButton"),
+  
   termMatchList: document.getElementById("termMatchList"),
   nextEntryButton: document.getElementById("nextEntryButton"),
   cancelEditButton: document.getElementById("cancelEditButton"),

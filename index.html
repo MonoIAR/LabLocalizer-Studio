@@ -148,29 +148,30 @@
               <button class="icon-button" id="closeEditorButton" type="button" title="关闭编辑栏">×</button>
             </div>
             <div class="editor-body">
-              <div class="field">
-                <label>原文</label>
-                <div class="readonly" id="sourcePreview"></div>
-              </div>
-              <div class="field">
-                <label for="translationEditor">译文</label>
-                <textarea class="editbox" id="translationEditor" disabled></textarea>
-              </div>
-              <div class="field">
-                <label>翻译状态</label>
-                <div class="button-grid" id="translationButtons">
-                  <button class="choice" type="button" data-status="已翻译">已翻译</button>
-                  <button class="choice" type="button" data-status="未翻译">未翻译</button>
-                  <button class="choice" type="button" data-status="有疑问">有疑问</button>
+              <div class="editor-fields">
+                <div class="field">
+                  <label>原文</label>
+                  <div class="readonly" id="sourcePreview"></div>
+                </div>
+                <div class="field">
+                  <label for="translationEditor">译文</label>
+                  <textarea class="editbox" id="translationEditor" disabled></textarea>
+                </div>
+                <div class="field">
+                  <label>翻译状态</label>
+                  <div class="button-grid" id="translationButtons">
+                    <button class="choice" type="button" data-status="已翻译">已翻译</button>
+                    <button class="choice" type="button" data-status="未翻译">未翻译</button>
+                    <button class="choice" type="button" data-status="有疑问">有疑问</button>
+                  </div>
                 </div>
               </div>
               <div class="term-match-box">
                 <div class="term-match-head">
                   <span class="term-match-title">术语匹配</span>
-                  <button class="btn secondary" id="matchTermsButton" type="button" disabled>尝试匹配术语表</button>
                 </div>
                 <div class="term-match-list" id="termMatchList">
-                  <div class="term-match-empty">尚未匹配。点击按钮后会根据当前原文查找术语管理中的术语。</div>
+                  <div class="term-match-empty">从左侧列表选择一行以查看术语匹配。</div>
                 </div>
               </div>
             </div>

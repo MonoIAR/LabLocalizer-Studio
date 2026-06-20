@@ -111,7 +111,6 @@ function renderEditor() {
   const entry = selectedEntry();
   const hasEntry = Boolean(entry);
   els.translationEditor.disabled = !hasEntry;
-  els.matchTermsButton.disabled = !hasEntry;
   els.nextEntryButton.disabled = !hasEntry;
   els.cancelEditButton.disabled = !hasEntry;
   els.saveEditButton.disabled = !hasEntry;
@@ -123,7 +122,7 @@ function renderEditor() {
     els.editorMeta.textContent = state.entries.length ? "当前搜索结果为空" : "从左侧列表选择一行";
     els.sourcePreview.textContent = "";
     els.translationEditor.value = "";
-    renderTermMatchEmpty("尚未匹配。点击按钮后会根据当前原文查找术语管理中的术语。");
+    renderTermMatchEmpty("从左侧列表选择一行以查看术语匹配。");
     updateChoiceButtons(null);
     return;
   }
@@ -138,7 +137,7 @@ function renderEditor() {
   if (els.translationEditor.value !== state.editDraft.translation) {
     els.translationEditor.value = state.editDraft.translation;
   }
-  renderTermMatchEmpty("尚未匹配。点击按钮后会根据当前原文查找术语管理中的术语。");
+  matchTermsForSelectedEntry();
   updateChoiceButtons(state.editDraft);
 }
 
