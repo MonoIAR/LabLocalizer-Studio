@@ -418,7 +418,7 @@ tbody tr.active { outline: 2px solid rgba(22, 119, 255, .55); outline-offset: -2
 .col-check { width: 48px; }
 .col-line { width: 72px; color: var(--muted); }
 .col-status { width: 122px; }
-.col-review { width: 126px; }
+
 .col-actions { width: 82px; }
 
 .check {

@@ -23,11 +23,6 @@ els.translationFilter.addEventListener("change", () => {
   state.currentPage = 1;
   renderEntries();
 });
-els.reviewFilter.addEventListener("change", () => {
-  state.reviewFilter = els.reviewFilter.value;
-  state.currentPage = 1;
-  renderEntries();
-});
 els.prevPageButton.addEventListener("click", () => {
   state.currentPage = Math.max(1, state.currentPage - 1);
   renderEntries();
@@ -51,12 +46,6 @@ els.translationButtons.addEventListener("click", event => {
   if (!button || !state.editDraft) return;
   state.editDraft.translationStatus = button.dataset.status;
   state.editDraft.statusTouched = true;
-  updateChoiceButtons(state.editDraft);
-});
-els.reviewButtons.addEventListener("click", event => {
-  const button = event.target.closest("[data-review]");
-  if (!button || !state.editDraft) return;
-  state.editDraft.reviewStatus = button.dataset.review;
   updateChoiceButtons(state.editDraft);
 });
 els.matchTermsButton.addEventListener("click", matchTermsForSelectedEntry);

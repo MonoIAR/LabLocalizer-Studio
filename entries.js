@@ -20,12 +20,10 @@ function loadText(text, file) {
   state.editDraft = null;
   state.search = "";
   state.translationFilter = "all";
-  state.reviewFilter = "all";
   state.currentPage = 1;
 
   els.searchInput.value = "";
   els.translationFilter.value = "all";
-  els.reviewFilter.value = "all";
   els.fileName.textContent = file.name;
   els.exportButton.disabled = state.entries.length === 0;
   updateGithubActionButtons();
@@ -46,8 +44,7 @@ function parseLine(line, lineNumber) {
     translation,
     hasSeparator,
     translationStatus: "未翻译",
-    statusTouched: false,
-    reviewStatus: "未审核"
+    statusTouched: false
   };
   entry.translationStatus = autoTranslationStatus(entry);
   return entry;
@@ -70,11 +67,9 @@ function renderEntries() {
 
 function renderStats() {
   const translated = state.entries.filter(entry => entry.translationStatus === "已翻译").length;
-  const reviewed = state.entries.filter(entry => entry.reviewStatus === "审核通过").length;
   els.totalCount.textContent = state.entries.length;
   els.visibleCount.textContent = currentPageIndexes().length;
   els.translatedCount.textContent = translated;
-  els.reviewedCount.textContent = reviewed;
 }
 
 function renderEntryTable() {
@@ -101,8 +96,7 @@ function renderEntryTable() {
     row.appendChild(textCell(entry.lineNumber, "col-line"));
     row.appendChild(textCell(entry.source, "text-cell"));
     row.appendChild(textCell(entry.translation, "text-cell"));
-    row.appendChild(badgeCell(entry.translationStatus, "translation"));
-    row.appendChild(badgeCell(entry.reviewStatus, "review"));
+    row.appendChild(badgeCell(entry.translationStatus));
     row.appendChild(entryActionsCell(entry));
     fragment.appendChild(row);
   }
@@ -153,10 +147,6 @@ function updateChoiceButtons(entry) {
     button.classList.toggle("active", Boolean(entry && button.dataset.status === entry.translationStatus));
     button.disabled = !entry;
   });
-  els.reviewButtons.querySelectorAll("[data-review]").forEach(button => {
-    button.classList.toggle("active", Boolean(entry && button.dataset.review === entry.reviewStatus));
-    button.disabled = !entry;
-  });
 }
 
 function createEntryDraft(entry) {
@@ -167,8 +157,7 @@ function createEntryDraft(entry) {
     translation: entry.translation,
     hasSeparator: entry.hasSeparator,
     translationStatus: entry.translationStatus,
-    statusTouched: entry.statusTouched,
-    reviewStatus: entry.reviewStatus
+    statusTouched: entry.statusTouched
   };
 }
 
@@ -179,7 +168,6 @@ function saveEntryDraft() {
   entry.translation = state.editDraft.translation;
   entry.translationStatus = state.editDraft.translationStatus;
   entry.statusTouched = state.editDraft.statusTouched;
-  entry.reviewStatus = state.editDraft.reviewStatus;
   state.editDraft = createEntryDraft(entry);
   renderEntries();
   showToast("词条已保存。");
@@ -311,12 +299,6 @@ function handleBulkAction(event) {
         entry.statusTouched = true;
       }
     }
-  } else if (button.dataset.bulkReview) {
-    for (const entry of state.entries) {
-      if (selectedIds.has(entry.id)) {
-        entry.reviewStatus = button.dataset.bulkReview;
-      }
-    }
   } else if (button.dataset.bulkClear) {
     state.selectedEntryIds.clear();
   } else if (button.dataset.bulkDelete) {
@@ -341,7 +323,7 @@ function selectNextEntry() {
 }
 
 function matchesEntrySearch(entry) {
-  if (!matchesTranslationFilter(entry) || !matchesReviewFilter(entry)) {
+  if (!matchesTranslationFilter(entry)) {
     return false;
   }
 
@@ -349,21 +331,13 @@ function matchesEntrySearch(entry) {
   return String(entry.lineNumber).includes(state.search)
     || entry.source.toLowerCase().includes(state.search)
     || entry.translation.toLowerCase().includes(state.search)
-    || entry.translationStatus.toLowerCase().includes(state.search)
-    || entry.reviewStatus.toLowerCase().includes(state.search);
+    || entry.translationStatus.toLowerCase().includes(state.search);
 }
 
 function matchesTranslationFilter(entry) {
   if (state.translationFilter === "translated") return entry.translationStatus === "已翻译";
   if (state.translationFilter === "untranslated") return entry.translationStatus === "未翻译";
   if (state.translationFilter === "question") return entry.translationStatus === "有疑问";
-  return true;
-}
-
-function matchesReviewFilter(entry) {
-  if (state.reviewFilter === "approved") return entry.reviewStatus === "审核通过";
-  if (state.reviewFilter === "rejected") return entry.reviewStatus === "审核驳回";
-  if (state.reviewFilter === "unreviewed") return entry.reviewStatus === "未审核";
   return true;
 }
 

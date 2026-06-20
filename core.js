@@ -37,7 +37,6 @@ const state = {
   selectedId: null,
   search: "",
   translationFilter: "all",
-  reviewFilter: "all",
   currentPage: 1,
   selectedEntryIds: new Set(),
   editorOpen: false,
@@ -66,7 +65,6 @@ const els = {
   bulkMenu: document.getElementById("bulkMenu"),
   searchInput: document.getElementById("searchInput"),
   translationFilter: document.getElementById("translationFilter"),
-  reviewFilter: document.getElementById("reviewFilter"),
   fileName: document.getElementById("fileName"),
   emptyState: document.getElementById("emptyState"),
   entryTable: document.getElementById("entryTable"),
@@ -81,14 +79,12 @@ const els = {
   totalCount: document.getElementById("totalCount"),
   visibleCount: document.getElementById("visibleCount"),
   translatedCount: document.getElementById("translatedCount"),
-  reviewedCount: document.getElementById("reviewedCount"),
   editorTitle: document.getElementById("editorTitle"),
   editorMeta: document.getElementById("editorMeta"),
   closeEditorButton: document.getElementById("closeEditorButton"),
   sourcePreview: document.getElementById("sourcePreview"),
   translationEditor: document.getElementById("translationEditor"),
   translationButtons: document.getElementById("translationButtons"),
-  reviewButtons: document.getElementById("reviewButtons"),
   matchTermsButton: document.getElementById("matchTermsButton"),
   termMatchList: document.getElementById("termMatchList"),
   nextEntryButton: document.getElementById("nextEntryButton"),
@@ -307,9 +303,9 @@ function textCell(value, className) {
   return td;
 }
 
-function badgeCell(status, kind) {
+function badgeCell(status) {
   const td = document.createElement("td");
-  td.className = kind === "review" ? "col-review" : "col-status";
+  td.className = "col-status";
   td.appendChild(statusBadge(status));
   return td;
 }
@@ -320,15 +316,12 @@ function statusBadge(status) {
   icon.className = "status-icon";
   span.className = "badge";
 
-  if (status === "已翻译" || status === "审核通过") {
+  if (status === "已翻译") {
     span.classList.add("done");
     icon.textContent = "✓";
   } else if (status === "有疑问") {
     span.classList.add("question");
     icon.textContent = "?";
-  } else if (status === "审核驳回") {
-    span.classList.add("rejected");
-    icon.textContent = "×";
   } else if (status === "未翻译") {
     span.classList.add("pending");
     icon.textContent = "!";

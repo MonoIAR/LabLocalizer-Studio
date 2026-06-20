@@ -71,7 +71,7 @@
           <div class="stat"><strong id="totalCount">0</strong><span>总条目</span></div>
           <div class="stat"><strong id="visibleCount">0</strong><span>本页显示</span></div>
           <div class="stat"><strong id="translatedCount">0</strong><span>已翻译</span></div>
-          <div class="stat"><strong id="reviewedCount">0</strong><span>审核通过</span></div>
+
         </section>
         <button class="btn secondary theme-toggle" id="themeToggle" type="button" title="切换暗色模式" aria-label="切换暗色模式">
           <span class="theme-icon" aria-hidden="true"></span>
@@ -91,9 +91,6 @@
                   <button type="button" data-bulk-status="未翻译">标记为 <span class="badge neutral">未翻译</span></button>
                   <button type="button" data-bulk-status="已翻译">标记为 <span class="badge done">已翻译</span></button>
                   <button type="button" data-bulk-status="有疑问">标记为 <span class="badge question">有疑问</span></button>
-                  <button type="button" data-bulk-review="审核通过">标记为 <span class="badge done">已审核</span></button>
-                  <button type="button" data-bulk-review="未审核">标记为 <span class="badge neutral">未审核</span></button>
-                  <button type="button" data-bulk-review="审核驳回">标记为 <span class="badge rejected">已驳回</span></button>
                   <div class="bulk-separator"></div>
                   <button type="button" data-bulk-clear="true">取消选择</button>
                   <button type="button" data-bulk-delete="true">删除已选词条</button>
@@ -107,12 +104,7 @@
                   <option value="untranslated">只看未翻译</option>
                   <option value="question">只看有疑问</option>
                 </select>
-                <select class="select" id="reviewFilter" aria-label="审核状态筛选">
-                  <option value="all">全部审核状态</option>
-                  <option value="approved">只看审核通过</option>
-                  <option value="rejected">只看审核驳回</option>
-                  <option value="unreviewed">只看未审核</option>
-                </select>
+
                 <span class="crumb" id="fileName">尚未打开文件</span>
               </div>
             </div>
@@ -132,7 +124,6 @@
                     <th>原文</th>
                     <th>译文</th>
                     <th class="col-status">翻译状态</th>
-                    <th class="col-review">审核</th>
                     <th class="col-actions">操作</th>
                   </tr>
                 </thead>
@@ -171,14 +162,6 @@
                   <button class="choice" type="button" data-status="已翻译">已翻译</button>
                   <button class="choice" type="button" data-status="未翻译">未翻译</button>
                   <button class="choice" type="button" data-status="有疑问">有疑问</button>
-                </div>
-              </div>
-              <div class="field">
-                <label>审核状态</label>
-                <div class="button-grid" id="reviewButtons">
-                  <button class="choice" type="button" data-review="未审核">未审核</button>
-                  <button class="choice" type="button" data-review="审核通过">审核通过</button>
-                  <button class="choice" type="button" data-review="审核驳回">审核驳回</button>
                 </div>
               </div>
               <div class="term-match-box">
