@@ -22,13 +22,80 @@ async function testGithubConnection() {
   }
 }
 
-async function loadFromGithub() {
-  if (!settings.githubToken || !settings.githubOwner || !settings.githubRepo || !settings.githubPath) {
+function repoContentsUrl(path) {
+  const branch = settings.githubBranch || "main";
+  return `https://api.github.com/repos/${encodeURIComponent(settings.githubOwner)}/${encodeURIComponent(settings.githubRepo)}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(branch)}`;
+}
+
+async function listGithubDirectory(directory) {
+  const url = repoContentsUrl(directory);
+  const res = await fetch(url, { headers: githubHeaders() });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (!Array.isArray(data)) throw new Error("返回数据不是目录列表。");
+  return data.filter(item => item.type === "file" && item.name.endsWith(".txt"));
+}
+
+function openGithubFilePicker() {
+  if (!settings.githubToken || !settings.githubOwner || !settings.githubRepo || !settings.githubDirectory) {
     showToast("请先在设置中填写完整的 GitHub 信息。");
     return;
   }
+
+  els.githubFilePickerModal.hidden = false;
+  els.githubFileList.textContent = "";
+  els.githubFilePickerEmpty.hidden = true;
+
+  const loading = document.createElement("div");
+  loading.className = "github-file-empty";
+  loading.textContent = "正在加载目录...";
+  els.githubFileList.appendChild(loading);
+
+  listGithubDirectory(settings.githubDirectory)
+    .then(files => {
+      els.githubFileList.textContent = "";
+      if (files.length === 0) {
+        els.githubFilePickerEmpty.hidden = false;
+        return;
+      }
+      const fragment = document.createDocumentFragment();
+      for (const file of files) {
+        const item = document.createElement("button");
+        item.className = "github-file-item";
+        item.type = "button";
+        item.textContent = file.name;
+        item.title = file.path;
+        item.addEventListener("click", () => {
+          loadGithubFile(file.path);
+          closeGithubFilePicker();
+        });
+        fragment.appendChild(item);
+      }
+      els.githubFileList.appendChild(fragment);
+    })
+    .catch(err => {
+      els.githubFileList.textContent = "";
+      const error = document.createElement("div");
+      error.className = "github-file-empty";
+      error.textContent = `加载失败：${err.message}`;
+      els.githubFileList.appendChild(error);
+    });
+}
+
+function closeGithubFilePicker() {
+  els.githubFilePickerModal.hidden = true;
+  els.githubFileList.textContent = "";
+  els.githubFilePickerEmpty.hidden = true;
+}
+
+async function loadGithubFile(filePath) {
+  if (!settings.githubToken || !settings.githubOwner || !settings.githubRepo) {
+    showToast("请先在设置中填写完整的 GitHub 信息。");
+    return;
+  }
+
   const branch = settings.githubBranch || "main";
-  const url = `https://api.github.com/repos/${encodeURIComponent(settings.githubOwner)}/${encodeURIComponent(settings.githubRepo)}/contents/${encodeURIComponent(settings.githubPath)}?ref=${encodeURIComponent(branch)}`;
+  const url = repoContentsUrl(filePath);
   try {
     const res = await fetch(url, { headers: githubHeaders() });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -36,16 +103,18 @@ async function loadFromGithub() {
     if (!data.content) throw new Error("返回数据中没有文件内容。");
     const bytes = Uint8Array.from(atob(data.content.replace(/\n/g, "")), c => c.charCodeAt(0));
     const text = new TextDecoder().decode(bytes);
-    const fileName = settings.githubPath.split("/").pop() || "github.txt";
+    const fileName = data.name || filePath.split("/").pop() || "github.txt";
     loadText(text, { name: fileName });
+    state.githubFilePath = filePath;
     state.githubSha = data.sha;
     showToast("已从 GitHub 加载文件。");
   } catch (err) {
     showToast(`读取失败：${err.message}`);
+    return;
   }
 
   const glossaryPath = "glossary.json";
-  const glossaryUrl = `https://api.github.com/repos/${encodeURIComponent(settings.githubOwner)}/${encodeURIComponent(settings.githubRepo)}/contents/${encodeURIComponent(glossaryPath)}?ref=${encodeURIComponent(branch)}`;
+  const glossaryUrl = repoContentsUrl(glossaryPath);
   try {
     const res = await fetch(glossaryUrl, { headers: githubHeaders() });
     if (!res.ok) return;
@@ -76,8 +145,14 @@ async function loadFromGithub() {
   }
 }
 
+function resolveGithubTargetPath() {
+  if (state.githubFilePath) return state.githubFilePath;
+  if (!settings.githubDirectory || !state.fileName) return "";
+  return `${settings.githubDirectory}/${state.fileName}`.replace(/\/{2,}/g, "/");
+}
+
 async function pushToGithub() {
-  if (!settings.githubToken || !settings.githubOwner || !settings.githubRepo || !settings.githubPath) {
+  if (!settings.githubToken || !settings.githubOwner || !settings.githubRepo) {
     showToast("请先在设置中填写完整的 GitHub 信息。");
     return;
   }
@@ -85,6 +160,13 @@ async function pushToGithub() {
     showToast("当前没有可提交的词条。");
     return;
   }
+
+  const targetPath = resolveGithubTargetPath();
+  if (!targetPath) {
+    showToast("无法确定提交路径，请先通过 GitHub 选择文件或打开本地文件。");
+    return;
+  }
+
   const lines = state.entries.map(entry => {
     if (entry.hasSeparator || entry.translation.trim()) {
       return `${entry.source}${SEPARATOR}${entry.translation}`;
@@ -98,8 +180,7 @@ async function pushToGithub() {
   let sha = state.githubSha || "";
   if (!sha) {
     try {
-      const getUrl = `https://api.github.com/repos/${encodeURIComponent(settings.githubOwner)}/${encodeURIComponent(settings.githubRepo)}/contents/${encodeURIComponent(settings.githubPath)}?ref=${encodeURIComponent(branch)}`;
-      const getRes = await fetch(getUrl, { headers: githubHeaders() });
+      const getRes = await fetch(repoContentsUrl(targetPath), { headers: githubHeaders() });
       if (getRes.ok) {
         const data = await getRes.json();
         sha = data.sha || "";
@@ -126,7 +207,7 @@ async function pushToGithub() {
     });
     if (!createRefRes.ok) throw new Error(`创建分支失败：HTTP ${createRefRes.status}`);
 
-    const putUrl = `${repoUrl}/contents/${encodeURIComponent(settings.githubPath)}`;
+    const putUrl = `${repoUrl}/contents/${encodeURIComponent(targetPath)}`;
     const putBody = { message, content, branch: prBranch };
     if (sha) putBody.sha = sha;
     const putRes = await fetch(putUrl, {
@@ -180,8 +261,7 @@ async function pushGlossaryToGithub() {
   let sha = state.githubGlossarySha || "";
   if (!sha) {
     try {
-      const getUrl = `https://api.github.com/repos/${encodeURIComponent(settings.githubOwner)}/${encodeURIComponent(settings.githubRepo)}/contents/${encodeURIComponent(glossaryPath)}?ref=${encodeURIComponent(branch)}`;
-      const getRes = await fetch(getUrl, { headers: githubHeaders() });
+      const getRes = await fetch(repoContentsUrl(glossaryPath), { headers: githubHeaders() });
       if (getRes.ok) {
         const data = await getRes.json();
         sha = data.sha || "";

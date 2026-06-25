@@ -11,6 +11,7 @@ function handleFilePick(event) {
 function loadText(text, file) {
   const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
   state.fileName = file.name;
+  state.githubFilePath = "";
   state.entries = lines
     .map((line, index) => parseLine(line, index + 1))
     .filter(entry => entry.raw.trim().length > 0);

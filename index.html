@@ -31,7 +31,7 @@
 
       <div class="settings-section">
         <button class="settings-toggle" id="settingsToggle" type="button" aria-expanded="false" aria-controls="settingsPanel">
-          <span class="nav-icon fa-solid fa-ellipsis"></span>更多
+          <span class="nav-icon fa-solid fa-ellipsis"></span>选项
         </button>
         <div class="settings-panel" id="settingsPanel" hidden>
           <div class="settings-group">
@@ -46,7 +46,7 @@
             <input class="input settings-input" id="githubOwner" type="text" placeholder="仓库所有者 (owner)" autocomplete="off" />
             <input class="input settings-input" id="githubRepo" type="text" placeholder="仓库名 (repo)" autocomplete="off" />
             <input class="input settings-input" id="githubBranch" type="text" placeholder="分支 (默认 main)" autocomplete="off" />
-            <input class="input settings-input" id="githubPath" type="text" placeholder="文件路径 (如: data/loc.txt)" autocomplete="off" />
+            <input class="input settings-input" id="githubDirectory" type="text" placeholder="目录路径 (如: data/loc)" autocomplete="off" />
             <input class="input settings-input" id="githubCommitMsg" type="text" placeholder="默认提交信息" autocomplete="off" />
             <div class="settings-actions">
               <button class="btn secondary" id="testGithubButton" type="button">测试连接</button>
@@ -55,7 +55,7 @@
           </div>
           <div class="settings-group">
             <label class="settings-label">GitHub 操作</label>
-            <button class="btn secondary" id="loadFromGithubButton" type="button" disabled><i class="fa-solid fa-cloud-arrow-down"></i> 从仓库读取</button>
+            <button class="btn secondary" id="openGithubFilePickerButton" type="button" disabled><i class="fa-solid fa-folder-open"></i> 从 GitHub 选择文件</button>
             <button class="btn secondary" id="pushToGithubButton" type="button" disabled><i class="fa-solid fa-code-pull-request"></i> 创建 Pull Request</button>
           </div>
         </div>
@@ -286,6 +286,22 @@
         <button class="btn danger" id="submitDeleteConfirm" type="submit" disabled>删除</button>
       </div>
     </form>
+  </div>
+
+  <div class="modal-backdrop" id="githubFilePickerModal" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <h2 class="modal-title" id="githubFilePickerTitle">选择 GitHub 文件</h2>
+        <button class="icon-button" id="closeGithubFilePicker" type="button">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="github-file-list" id="githubFileList"></div>
+        <div class="github-file-empty" id="githubFilePickerEmpty" hidden>该目录下没有 .txt 文件。</div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn secondary" id="cancelGithubFilePicker" type="button">取消</button>
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>

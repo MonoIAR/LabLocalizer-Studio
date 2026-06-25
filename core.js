@@ -8,7 +8,7 @@ const defaultSettings = {
   githubOwner: "",
   githubRepo: "",
   githubBranch: "main",
-  githubPath: "",
+  githubDirectory: "",
   githubCommitMsg: "更新本地化文件"
 };
 
@@ -17,6 +17,10 @@ function loadSettings() {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return { ...defaultSettings };
     const parsed = JSON.parse(raw);
+    if (!parsed.githubDirectory && parsed.githubPath) {
+      const lastSlash = parsed.githubPath.lastIndexOf("/");
+      parsed.githubDirectory = lastSlash > 0 ? parsed.githubPath.slice(0, lastSlash) : "";
+    }
     return { ...defaultSettings, ...parsed };
   } catch {
     return { ...defaultSettings };
@@ -32,6 +36,7 @@ let settings = loadSettings();
 const state = {
   page: "entries",
   fileName: "",
+  githubFilePath: "",
   entries: [],
   filteredIndexes: [],
   selectedId: null,
@@ -125,12 +130,18 @@ const els = {
   githubOwner: document.getElementById("githubOwner"),
   githubRepo: document.getElementById("githubRepo"),
   githubBranch: document.getElementById("githubBranch"),
-  githubPath: document.getElementById("githubPath"),
+  githubDirectory: document.getElementById("githubDirectory"),
   githubCommitMsg: document.getElementById("githubCommitMsg"),
   testGithubButton: document.getElementById("testGithubButton"),
   saveSettingsButton: document.getElementById("saveSettingsButton"),
-  loadFromGithubButton: document.getElementById("loadFromGithubButton"),
+  openGithubFilePickerButton: document.getElementById("openGithubFilePickerButton"),
   pushToGithubButton: document.getElementById("pushToGithubButton"),
+  githubFilePickerModal: document.getElementById("githubFilePickerModal"),
+  githubFilePickerTitle: document.getElementById("githubFilePickerTitle"),
+  githubFileList: document.getElementById("githubFileList"),
+  githubFilePickerEmpty: document.getElementById("githubFilePickerEmpty"),
+  closeGithubFilePicker: document.getElementById("closeGithubFilePicker"),
+  cancelGithubFilePicker: document.getElementById("cancelGithubFilePicker"),
   importGlossaryButton: document.getElementById("importGlossaryButton"),
   exportGlossaryButton: document.getElementById("exportGlossaryButton"),
   glossaryFileInput: document.getElementById("glossaryFileInput"),
@@ -173,7 +184,7 @@ function populateSettings() {
   els.githubOwner.value = settings.githubOwner || "";
   els.githubRepo.value = settings.githubRepo || "";
   els.githubBranch.value = settings.githubBranch || "main";
-  els.githubPath.value = settings.githubPath || "";
+  els.githubDirectory.value = settings.githubDirectory || "";
   els.githubCommitMsg.value = settings.githubCommitMsg || defaultSettings.githubCommitMsg;
   applyTheme(settings.theme === "dark");
   updateGithubActionButtons();
@@ -184,7 +195,7 @@ function saveSettings() {
   settings.githubOwner = els.githubOwner.value.trim();
   settings.githubRepo = els.githubRepo.value.trim();
   settings.githubBranch = els.githubBranch.value.trim() || "main";
-  settings.githubPath = els.githubPath.value.trim();
+  settings.githubDirectory = els.githubDirectory.value.trim().replace(/\/$/, "");
   settings.githubCommitMsg = els.githubCommitMsg.value.trim() || defaultSettings.githubCommitMsg;
   saveSettingsToStorage(settings);
   updateGithubActionButtons();
@@ -192,8 +203,8 @@ function saveSettings() {
 }
 
 function updateGithubActionButtons() {
-  const canUseGithub = settings.githubToken && settings.githubOwner && settings.githubRepo && settings.githubPath;
-  els.loadFromGithubButton.disabled = !canUseGithub;
+  const canUseGithub = settings.githubToken && settings.githubOwner && settings.githubRepo && settings.githubDirectory;
+  els.openGithubFilePickerButton.disabled = !canUseGithub;
   els.pushToGithubButton.disabled = !canUseGithub || state.entries.length === 0;
   const canPushGlossary = settings.githubToken && settings.githubOwner && settings.githubRepo;
   els.pushGlossaryToGithubButton.disabled = !canPushGlossary || state.terms.length === 0;

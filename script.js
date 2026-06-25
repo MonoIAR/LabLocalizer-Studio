@@ -95,7 +95,9 @@ els.settingsToggle.addEventListener("click", () => {
 els.settingsThemeToggle.addEventListener("click", () => toggleTheme());
 els.saveSettingsButton.addEventListener("click", saveSettings);
 els.testGithubButton.addEventListener("click", testGithubConnection);
-els.loadFromGithubButton.addEventListener("click", loadFromGithub);
+els.openGithubFilePickerButton.addEventListener("click", openGithubFilePicker);
+els.closeGithubFilePicker.addEventListener("click", closeGithubFilePicker);
+els.cancelGithubFilePicker.addEventListener("click", closeGithubFilePicker);
 els.pushToGithubButton.addEventListener("click", pushToGithub);
 els.pushGlossaryToGithubButton.addEventListener("click", pushGlossaryToGithub);
 
